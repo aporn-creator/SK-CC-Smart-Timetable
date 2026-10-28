@@ -6,7 +6,6 @@
   <title>SK-CC Smart Timetable (ตารางเรียน-ตารางสอนออนไลน์)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <!-- ไลบรารี ป๊อปอัพแจ้งเตือน SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: 'Prompt', sans-serif; }
@@ -16,33 +15,16 @@
     ::-webkit-scrollbar-thumb:hover { background: #64748b; }
     .swal2-popup { font-family: 'Prompt', sans-serif !important; border-radius: 1.5rem !important; }
 
-    /* บังคับซ่อนปุ่ม PDF บนหน้าจอมือถือแน่นอน 100% */
-    .btn-pdf-desktop {
-      display: none !important;
-    }
+    .btn-pdf-desktop { display: none !important; }
     @media (min-width: 768px) {
-      .btn-pdf-desktop {
-        display: inline-flex !important;
-      }
+      .btn-pdf-desktop { display: inline-flex !important; }
     }
+    #printablePDFContainer { display: none !important; }
 
-    /* ซ่อน Container สำหรับพิมพ์ ไม่ให้แสดงบนหน้าจอหลัก */
-    #printablePDFContainer {
-      display: none !important;
-    }
-
-    /* โครงสร้างสำหรับการสั่งพิมพ์เป็น PDF (Landscape A4) */
     @media print {
-      @page {
-        size: landscape;
-        margin: 5mm;
-      }
-      body * {
-        visibility: hidden !important;
-      }
-      #printablePDFContainer, #printablePDFContainer * {
-        visibility: visible !important;
-      }
+      @page { size: landscape; margin: 5mm; }
+      body * { visibility: hidden !important; }
+      #printablePDFContainer, #printablePDFContainer * { visibility: visible !important; }
       #printablePDFContainer {
         display: block !important;
         position: absolute !important;
@@ -70,12 +52,9 @@
     <!-- Top Header Card -->
     <div class="bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-900 text-white p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-xl border border-indigo-800/50 flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-3 relative overflow-hidden">
       <div class="z-10 flex flex-col items-center md:items-start gap-1.5 w-full md:w-auto">
-        <!-- โลโก้แบบไม่มีกรอบ -->
         <div class="flex items-center justify-center md:justify-start w-full">
           <img src="https://i.postimg.cc/gk1Q6RRF/SKCC-07-(5).png" alt="โลโก้วิทยาลัยชุมชนสงขลา" class="h-9 md:h-12 w-auto object-contain drop-shadow-md mx-auto md:mx-0">
         </div>
-        
-        <!-- ชื่อระบบ -->
         <div class="w-full">
           <h1 class="text-base md:text-2xl lg:text-3xl font-bold tracking-normal text-white flex flex-wrap justify-center md:justify-start items-baseline gap-x-2 gap-y-0.5">
             <span class="text-blue-400 font-extrabold">SK-CC</span>
@@ -87,7 +66,6 @@
         </div>
       </div>
 
-      <!-- ปุ่มกด Login และ PDF (ปุ่ม PDF ซ่อนบนมือถือแน่นอนด้วยคลาส btn-pdf-desktop) -->
       <div id="authSection" class="flex flex-row flex-wrap justify-center items-center gap-2 z-10 w-full md:w-auto pt-2 md:pt-0 border-t border-white/10 md:border-t-0">
         <button onclick="downloadPDF()" class="btn-pdf-desktop flex-none justify-center bg-emerald-600 hover:bg-emerald-700 backdrop-blur-md text-white border border-emerald-500/50 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all shadow-md items-center gap-1.5">
           📥 ดาวน์โหลด PDF ตารางเรียน
@@ -132,7 +110,6 @@
           </select>
         </div>
 
-        <!-- กลุ่มเรียน (Custom Searchable Dropdown) -->
         <div class="relative" id="groupContainer">
           <label class="block font-bold text-slate-800 mb-1">กลุ่มเรียน <span class="text-rose-500">*</span></label>
           <div class="relative">
@@ -149,7 +126,6 @@
           <div id="groupListMenu" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-52 overflow-y-auto p-1.5 text-xs md:text-sm font-medium"></div>
         </div>
 
-        <!-- อาจารย์ผู้สอน (Custom Searchable Dropdown) -->
         <div class="relative" id="instructorContainer">
           <label class="block font-bold text-slate-800 mb-1">อาจารย์ผู้สอน</label>
           <div class="relative">
@@ -175,7 +151,6 @@
         </div>
       </div>
 
-      <!-- ปุ่มเลือกวันและล้างตัวกรอง -->
       <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-2 pt-2 border-t border-slate-100 text-xs md:text-sm">
         <div class="flex items-center gap-1.5 flex-wrap">
           <span class="font-bold text-slate-600 mr-1 hidden sm:inline">วัน:</span>
@@ -268,12 +243,14 @@
   </div>
 
   <script>
+    // 🔗 วาง Web App URL จาก Step 2 ที่นี่
+    const API_URL = "https://script.google.com/macros/s/AKfycbxkrTp_5rKl_wEC6kKlJPKtFlXWUvB_GoCnLSwFbHay9qvnsa-G2nGhO1yGQCjuAvhL/exec";
+
     let rawData = [];
     let isAdminLoggedIn = false;
     let currentDayFilter = '';
     let currentViewMode = 'grid';
     let activeMobileBlockIndex = 0;
-
     let dropdownMasterOptions = { group: [], instructor: [] };
 
     const timeSlots = [
@@ -293,7 +270,153 @@
 
     window.onload = function() { loadData(); };
 
-    /* === ฟังก์ชันดาวน์โหลด PDF (ใช้งานบนคอมพิวเตอร์) === */
+    function loadData() {
+      document.getElementById('resultCount').innerHTML = 
+        `<span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span> กำลังดึงข้อมูลตารางเรียน...`;
+
+      fetch(API_URL)
+        .then(res => res.json())
+        .then(res => {
+          if (res.success === false) {
+            showError(res.message || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
+            return;
+          }
+          rawData = Array.isArray(res) ? res : (res.data || []);
+          
+          if (rawData.length === 0) {
+            document.getElementById('resultCount').innerText = 'พบ 0 รายวิชา';
+            document.getElementById('scheduleContainer').innerHTML = 
+              `<div class="bg-amber-50 text-amber-900 p-6 rounded-2xl text-center text-sm font-bold border border-amber-200">
+                ⚠️ ไม่พบข้อมูลตารางเรียนในระบบ
+              </div>`;
+            return;
+          }
+
+          populateFilters(rawData);
+          filterData();
+        })
+        .catch(err => {
+          showError(err ? (err.message || String(err)) : 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        });
+    }
+
+    function submitLogin() {
+      const u = document.getElementById('loginUser').value;
+      const p = document.getElementById('loginPass').value;
+
+      if (!u || !p) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'กรุณากรอกข้อมูล',
+          text: 'กรุณากรอก Username และ Password ให้ครบถ้วน',
+          confirmButtonColor: '#4f46e5'
+        });
+        return;
+      }
+
+      fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'login', username: u, password: p })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          isAdminLoggedIn = true;
+          document.getElementById('adminWelcomeMsg').innerText = 'ผู้ดูแลระบบ: ' + res.name;
+          document.getElementById('adminControlPanel').classList.remove('hidden');
+          document.getElementById('authSection').classList.add('hidden');
+          toggleModal('loginModal', false);
+          filterData();
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'เข้าสู่ระบบสำเร็จ',
+            text: 'ยินดีต้อนรับผู้ดูแลระบบ',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'เข้าสู่ระบบไม่สำเร็จ',
+            text: res.message || 'Username หรือ Password ไม่ถูกต้อง',
+            confirmButtonColor: '#4f46e5'
+          });
+        }
+      });
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const formData = {
+        id: document.getElementById('field_id').value,
+        academic_year: document.getElementById('field_academic_year').value,
+        term: document.getElementById('field_term').value,
+        major: document.getElementById('field_major').value,
+        group_code: document.getElementById('field_group_code').value,
+        study_block: document.getElementById('field_study_block').value,
+        study_range: document.getElementById('field_study_range').value,
+        day: document.getElementById('field_day').value,
+        start_time: document.getElementById('field_start_time').value,
+        end_time: document.getElementById('field_end_time').value,
+        subject_code: document.getElementById('field_subject_code').value,
+        subject_name: document.getElementById('field_subject_name').value,
+        credits: document.getElementById('field_credits').value,
+        room_number: document.getElementById('field_room_number').value,
+        instructor_name: document.getElementById('field_instructor_name').value,
+        instructor_phone: document.getElementById('field_instructor_phone').value
+      };
+
+      fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'save', data: formData })
+      })
+      .then(res => res.json())
+      .then(res => {
+        Swal.fire({
+          icon: res.success ? 'success' : 'error',
+          title: res.success ? 'บันทึกสำเร็จ' : 'เกิดข้อผิดพลาด',
+          text: res.message,
+          confirmButtonColor: '#4f46e5'
+        });
+        if (res.success) {
+          toggleModal('formModal', false);
+          loadData();
+        }
+      });
+    }
+
+    function deleteScheduleItem(id) {
+      Swal.fire({
+        title: 'ยืนยันการลบรายวิชา?',
+        text: 'คุณต้องการลบรายวิชานี้ออกจากตารางเรียนใช่หรือไม่?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'ใช่, ลบรายวิชา',
+        cancelButtonText: 'ยกเลิก',
+        customClass: { popup: 'rounded-3xl' }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'delete', id: id })
+          })
+          .then(res => res.json())
+          .then(res => {
+            Swal.fire({
+              icon: res.success ? 'success' : 'error',
+              title: res.success ? 'ลบรายวิชาสำเร็จ' : 'เกิดข้อผิดพลาด',
+              text: res.message,
+              confirmButtonColor: '#4f46e5'
+            });
+            if (res.success) loadData();
+          });
+        }
+      });
+    }
+
     function downloadPDF() {
       const year = document.getElementById('filterYear').value || '';
       const term = document.getElementById('filterTerm').value || '';
@@ -327,8 +450,7 @@
           icon: 'warning',
           title: 'ข้อมูลไม่ครบถ้วน',
           text: 'กรุณาเลือกปีการศึกษา ภาคการศึกษา สาขาวิชา และกลุ่มเรียน ให้ครบถ้วนก่อนดาวน์โหลด PDF',
-          confirmButtonColor: '#4f46e5',
-          confirmButtonText: 'เข้าใจแล้ว'
+          confirmButtonColor: '#4f46e5'
         });
         return;
       }
@@ -352,7 +474,6 @@
       if (el) el.remove();
     }
 
-    /* === ฟังก์ชันสร้างโครงสร้างตารางเรียนสำหรับพิมพ์ PDF === */
     function buildPDFHTML(data, year, term, major, group) {
       const blockGroups = {};
       data.forEach(item => {
@@ -501,38 +622,6 @@
       return html;
     }
 
-    function loadData() {
-      google.script.run
-        .withSuccessHandler(res => {
-          if (!res) {
-            showError('ไม่ได้รับการตอบกลับจากระบบ Google Apps Script');
-            return;
-          }
-          if (res.success === false) {
-            showError(res.message || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
-            return;
-          }
-
-          rawData = Array.isArray(res) ? res : (res.data || []);
-          
-          if (rawData.length === 0) {
-            document.getElementById('resultCount').innerText = 'พบ 0 รายวิชา';
-            document.getElementById('scheduleContainer').innerHTML = 
-              `<div class="bg-amber-50 text-amber-900 p-6 rounded-2xl text-center text-sm font-bold border border-amber-200">
-                ⚠️ ไม่พบข้อมูลตารางเรียนในระบบ
-              </div>`;
-            return;
-          }
-
-          populateFilters(rawData);
-          filterData();
-        })
-        .withFailureHandler(err => {
-          showError(err ? (err.message || String(err)) : 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
-        })
-        .getSchedules();
-    }
-
     function showError(msg) {
       document.getElementById('resultCount').innerHTML = `<span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> การเชื่อมต่อขัดข้อง`;
       document.getElementById('scheduleContainer').innerHTML = `
@@ -548,11 +637,9 @@
 
     function populateFilters(data) {
       const getUnique = (key) => [...new Set(data.map(item => String(item[key] || '').trim()).filter(Boolean))];
-      
       fillSelect('filterYear', getUnique('academic_year'), '-- ทั้งหมด --');
       fillSelect('filterTerm', getUnique('term'), '-- ทั้งหมด --');
       fillSelect('filterMajor', getUnique('major'), '-- ทุกสาขาวิชา --');
-      
       updateSubFilters();
     }
 
@@ -578,7 +665,6 @@
       if (values.includes(currentVal)) select.value = currentVal;
     }
 
-    /* === Custom Dropdown === */
     function populateCustomDropdownData(type, options) {
       dropdownMasterOptions[type] = options;
       renderCustomDropdownMenu(type, options);
@@ -811,11 +897,7 @@
 
       let html = '';
 
-      /* ==========================================
-         1. เลเอาต์เฉพาะหน้าจอมือถือ (MOBILE TIMELINE TABS)
-         ========================================== */
       html += `<div class="block md:hidden space-y-3">`;
-      
       if (blockKeys.length > 1) {
         html += `<div class="flex bg-slate-200 p-1 rounded-xl gap-1">`;
         blockKeys.forEach((blockName, idx) => {
@@ -902,9 +984,6 @@
 
       html += `</div></div>`;
 
-      /* ==========================================
-         2. เลเอาต์หน้าจอคอมพิวเตอร์ (DESKTOP GRID TABLE)
-         ========================================== */
       html += `<div class="hidden md:block space-y-8">`;
 
       blockKeys.forEach((blockName, idx) => {
@@ -1037,7 +1116,6 @@
       });
 
       html += `</div>`;
-
       container.innerHTML = html;
     }
 
@@ -1095,47 +1173,6 @@
       else { modal.classList.add('hidden'); modal.classList.remove('flex'); }
     }
 
-    function submitLogin() {
-      const u = document.getElementById('loginUser').value;
-      const p = document.getElementById('loginPass').value;
-
-      if (!u || !p) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'กรุณากรอกข้อมูล',
-          text: 'กรุณากรอก Username และ Password ให้ครบถ้วน',
-          confirmButtonColor: '#4f46e5'
-        });
-        return;
-      }
-
-      google.script.run.withSuccessHandler(res => {
-        if (res.success) {
-          isAdminLoggedIn = true;
-          document.getElementById('adminWelcomeMsg').innerText = 'ผู้ดูแลระบบ: ' + res.name;
-          document.getElementById('adminControlPanel').classList.remove('hidden');
-          document.getElementById('authSection').classList.add('hidden');
-          toggleModal('loginModal', false);
-          filterData();
-          
-          Swal.fire({
-            icon: 'success',
-            title: 'เข้าสู่ระบบสำเร็จ',
-            text: 'ยินดีต้อนรับผู้ดูแลระบบ',
-            timer: 1500,
-            showConfirmButton: false
-          });
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'เข้าสู่ระบบไม่สำเร็จ',
-            text: res.message || 'Username หรือ Password ไม่ถูกต้อง',
-            confirmButtonColor: '#4f46e5'
-          });
-        }
-      }).checkLogin(u, p);
-    }
-
     function logoutAdmin() {
       isAdminLoggedIn = false;
       document.getElementById('adminControlPanel').classList.add('hidden');
@@ -1161,80 +1198,4 @@
       document.getElementById('field_day').value = data.day || 'เสาร์';
       document.getElementById('field_start_time').value = data.start_time || '08:30';
       document.getElementById('field_end_time').value = data.end_time || '12:10';
-      document.getElementById('field_subject_code').value = data.subject_code || '';
-      document.getElementById('field_subject_name').value = data.subject_name || '';
-      document.getElementById('field_credits').value = data.credits || '';
-      document.getElementById('field_room_number').value = data.room_number || '';
-      document.getElementById('field_instructor_name').value = data.instructor_name || '';
-      document.getElementById('field_instructor_phone').value = data.instructor_phone || '';
-      toggleModal('formModal', true);
-    }
-
-    function handleFormSubmit(e) {
-      e.preventDefault();
-      const formData = {
-        id: document.getElementById('field_id').value,
-        academic_year: document.getElementById('field_academic_year').value,
-        term: document.getElementById('field_term').value,
-        major: document.getElementById('field_major').value,
-        group_code: document.getElementById('field_group_code').value,
-        study_block: document.getElementById('field_study_block').value,
-        study_range: document.getElementById('field_study_range').value,
-        day: document.getElementById('field_day').value,
-        start_time: document.getElementById('field_start_time').value,
-        end_time: document.getElementById('field_end_time').value,
-        subject_code: document.getElementById('field_subject_code').value,
-        subject_name: document.getElementById('field_subject_name').value,
-        credits: document.getElementById('field_credits').value,
-        room_number: document.getElementById('field_room_number').value,
-        instructor_name: document.getElementById('field_instructor_name').value,
-        instructor_phone: document.getElementById('field_instructor_phone').value
-      };
-
-      google.script.run.withSuccessHandler(res => {
-        Swal.fire({
-          icon: res.success ? 'success' : 'error',
-          title: res.success ? 'บันทึกสำเร็จ' : 'เกิดข้อผิดพลาด',
-          text: res.message,
-          confirmButtonColor: '#4f46e5'
-        });
-        if (res.success) {
-          toggleModal('formModal', false);
-          loadData();
-        }
-      }).saveSchedule(formData);
-    }
-
-    function editSchedule(id) {
-      const item = rawData.find(i => String(i.id) === String(id));
-      if (item) openFormModal(item);
-    }
-
-    function deleteScheduleItem(id) {
-      Swal.fire({
-        title: 'ยืนยันการลบรายวิชา?',
-        text: 'คุณต้องการลบรายวิชานี้ออกจากตารางเรียนใช่หรือไม่?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'ใช่, ลบรายวิชา',
-        cancelButtonText: 'ยกเลิก',
-        customClass: { popup: 'rounded-3xl' }
-      }).then((result) => {
-        if (result.isConfirmed) {
-          google.script.run.withSuccessHandler(res => {
-            Swal.fire({
-              icon: res.success ? 'success' : 'error',
-              title: res.success ? 'ลบรายวิชาสำเร็จ' : 'เกิดข้อผิดพลาด',
-              text: res.message,
-              confirmButtonColor: '#4f46e5'
-            });
-            if (res.success) loadData();
-          }).deleteSchedule(id);
-        }
-      });
-    }
-  </script>
-</body>
-</html>
+      document.getElementById('field_
